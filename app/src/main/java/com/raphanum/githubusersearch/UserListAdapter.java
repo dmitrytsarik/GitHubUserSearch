@@ -1,12 +1,16 @@
 package com.raphanum.githubusersearch;
 
+import android.net.Uri;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -19,6 +23,7 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int PROGRESS_VIEW = 1;
     private boolean loading = false;
     private OnLoadMoreListener onLoadMoreListener;
+    private OnLoadImageListener onLoadImageListener;
 
     public UserListAdapter(List<User> userList, RecyclerView recyclerView) {
         this.userList = userList;
@@ -84,6 +89,8 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 CardView cardView = ((CardViewHolder)holder).cardView;
                 TextView textView = (TextView) cardView.findViewById(R.id.login_label);
                 textView.setText(userList.get(position).getLogin());
+                ImageView avatar = (ImageView) cardView.findViewById(R.id.user_image);
+                onLoadImageListener.loadImage(avatar, userList.get(position).getAvatarUrl());
             } else {
                 ((ProgressViewHolder)holder).progressBar.setIndeterminate(true);
             }
@@ -120,6 +127,14 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public interface OnLoadMoreListener {
         void onLoadMore();
+    }
+
+    public interface OnLoadImageListener {
+        void loadImage(ImageView imageView, String url);
+    }
+
+    public void setOnLoadImageListener(OnLoadImageListener onLoadImageListener) {
+        this.onLoadImageListener = onLoadImageListener;
     }
 
     public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {

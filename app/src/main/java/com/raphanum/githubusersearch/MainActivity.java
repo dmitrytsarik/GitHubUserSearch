@@ -1,6 +1,7 @@
 package com.raphanum.githubusersearch;
 
 import android.content.Context;
+import android.net.Uri;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.app.AppCompatActivity;
@@ -14,7 +15,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.util.List;
@@ -89,6 +93,16 @@ public class MainActivity extends AppCompatActivity {
                 //adapter.notifyItemInserted(userList.size() - 1);
                 page++;
                 callUserSearch(lastQuery, page);
+            }
+        });
+
+        adapter.setOnLoadImageListener(new UserListAdapter.OnLoadImageListener() {
+            @Override
+            public void loadImage(ImageView imageView, String url) {
+                Picasso.with(getApplicationContext())
+                        .load(Uri.parse(url))
+                        .placeholder(R.drawable.github_icon)
+                        .into(imageView);
             }
         });
 
