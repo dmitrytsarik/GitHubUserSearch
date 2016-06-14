@@ -1,6 +1,7 @@
 package com.raphanum.githubusersearch;
 
 import android.content.Context;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,8 +35,8 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText editTextSearch;
     private ContentLoadingProgressBar progressBar;
-    private boolean isLoading = false;
-    private String searchQuery = "";
+    private String lastQuery = "";
+    private RetainedFragment dataSaveFragment;
 
     private List<User> userList = null;
 
@@ -44,33 +46,31 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //TODO: divide onCreate into few methods
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        dataSaveFragment = (RetainedFragment) fragmentManager.findFragmentByTag("retainedFragment");
+
+        if (savedInstanceState != null) {
+            lastQuery = savedInstanceState.getString("lastQuery");
+        }
+
+        if (dataSaveFragment != null) {
+            userList = dataSaveFragment.getUserList();
+        } else {
+            dataSaveFragment = new RetainedFragment();
+            fragmentManager.beginTransaction().add(dataSaveFragment, "retainedFragment").commit();
+        }
+
         progressBar = (ContentLoadingProgressBar) findViewById(R.id.loading_progress);
+//        final ContentLoadingProgressBar loadMoreProgressBar = (ContentLoadingProgressBar)findViewById(R.id.load_more_progress);
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerview_search_result);
         layoutManager = new LinearLayoutManager(this);
-        adapter = new UserListAdapter(userList);
-        RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                if (Math.abs(dy) > 0) {
-                    hideKeyboard();
-                }
-                int visibleItemCount = layoutManager.getChildCount();
-                int totalItemCount = layoutManager.getItemCount();
-                int firstVisibleItems = layoutManager.findFirstVisibleItemPosition();
-                if ((visibleItemCount + firstVisibleItems) >= totalItemCount) {
-                    if (!isLoading) {
-                        isLoading = true;
-                        page++;
-                        callUserSearch(searchQuery, page);
-                    }
-                }
-            }
-        };
         if (recyclerView != null) {
             recyclerView.setLayoutManager(layoutManager);
+            adapter = new UserListAdapter(userList, recyclerView);
             recyclerView.setAdapter(adapter);
-            recyclerView.addOnScrollListener(scrollListener);
             recyclerView.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
@@ -80,6 +80,17 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
+        adapter.setOnLoadMoreListener(new UserListAdapter.OnLoadMoreListener() {
+            @Override
+            public void onLoadMore() {
+                //TODO: add circle progress bar
+                //userList.add(loadMoreProgressBar);
+                //adapter.notifyItemInserted(userList.size() - 1);
+                page++;
+                callUserSearch(lastQuery, page);
+            }
+        });
 
         editTextSearch = (EditText)findViewById(R.id.search_edit_text);
 
@@ -104,9 +115,10 @@ public class MainActivity extends AppCompatActivity {
                 page = 1;
                 if (s.length() > 0)
                 {
-                    progressBar.setVisibility(View.VISIBLE);
-                    callUserSearch(s.toString());
-                    searchQuery = s.toString();
+                    if (!s.toString().equals(lastQuery)) {
+                        progressBar.setVisibility(View.VISIBLE);
+                        callUserSearch(lastQuery = s.toString());
+                    }
                 } else {
                     adapter.setUserList(null);
                 }
@@ -121,8 +133,20 @@ public class MainActivity extends AppCompatActivity {
                 .baseUrl(GithubSearchService.API_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-
         github = retrofit.create(GithubSearchService.Github.class);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putString("lastQuery", lastQuery);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dataSaveFragment.setUserList(userList);
     }
 
     private void callUserSearch(String string) {
@@ -136,11 +160,13 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<GithubSearchService.SearchResult> call, Response<GithubSearchService.SearchResult> response) {
                 if (response.isSuccessful()) {
                     if (page > 1) {
-                        adapter.addUsers(response.body().getUserList());
-                        isLoading = false;
+                        userList.addAll(response.body().getUserList());
+                        adapter.setUserList(userList);
+                        //adapter.addUsers();
+                        adapter.setLoaded();
                         Log.i(TAG, "onResponse().isSuccessful() add() page: " + page);
                     } else {
-                        adapter.setUserList(response.body().getUserList());
+                        adapter.setUserList(userList = response.body().getUserList());
                         layoutManager.scrollToPosition(0);
                         Log.i(TAG, "onResponse().isSuccessful() set()");
                     }
@@ -159,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<GithubSearchService.SearchResult> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "onFailure()", Toast.LENGTH_SHORT).show();
                 Log.i(TAG, "onFailure()");
             }
         });
