@@ -176,7 +176,6 @@ public class MainActivity extends AppCompatActivity {
                     if (page > 1) {
                         userList.addAll(response.body().getUserList());
                         adapter.setUserList(userList);
-                        //adapter.addUsers();
                         adapter.setLoaded();
                         Log.i(TAG, "onResponse().isSuccessful() add() page: " + page);
                     } else {

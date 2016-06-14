@@ -1,6 +1,5 @@
 package com.raphanum.githubusersearch;
 
-import android.net.Uri;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -9,8 +8,6 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -40,8 +37,6 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     totalItemCount = linearLayoutManager.getItemCount();
                     lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
                     if (!loading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
-                        // End has been reached
-                        // Do something
                         if (onLoadMoreListener != null) {
                             onLoadMoreListener.onLoadMore();
                         }
@@ -54,11 +49,6 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public void setUserList(List<User> userList) {
         this.userList = userList;
-        notifyDataSetChanged();
-    }
-
-    public void addUsers(List<User> users) {
-        userList.addAll(users);
         notifyDataSetChanged();
     }
 

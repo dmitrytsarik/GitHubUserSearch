@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="72dp"
-    android:layout_margin="4dp"
+    android:layout_margin="@dimen/cardview_margin"
     app:cardCornerRadius="@dimen/cardview_corner_radius"
     app:cardElevation="@dimen/cardview_resting_elevation" >
 
@@ -18,10 +18,11 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:src="@drawable/github_icon"
-            android:scaleType="fitCenter" />
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/user_image_description" />
 
         <TextView
-            android:text="User Login"
+            android:text="@string/user_login"
             android:id="@+id/login_label"
             android:layout_gravity="center_vertical"
             android:layout_width="match_parent"
