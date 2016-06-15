@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayoutManager layoutManager;
 
     private EditText editTextSearch;
+    private TextWatcher textWatcher;
     private ContentLoadingProgressBar progressBar;
     private String lastQuery = "";
     private RetainedFragment dataSaveFragment;
@@ -50,8 +51,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //TODO: divide onCreate into few methods
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         dataSaveFragment = (RetainedFragment) fragmentManager.findFragmentByTag("retainedFragment");
@@ -68,7 +67,42 @@ public class MainActivity extends AppCompatActivity {
         }
 
         progressBar = (ContentLoadingProgressBar) findViewById(R.id.loading_progress);
-//        final ContentLoadingProgressBar loadMoreProgressBar = (ContentLoadingProgressBar)findViewById(R.id.load_more_progress);
+        initRecyclerView();
+        initEditTextSearch();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(GithubSearchService.API_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        github = retrofit.create(GithubSearchService.Github.class);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        editTextSearch.addTextChangedListener(textWatcher);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        editTextSearch.removeTextChangedListener(textWatcher);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putString("lastQuery", lastQuery);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dataSaveFragment.setUserList(userList);
+    }
+
+    private void initRecyclerView() {
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerview_search_result);
         layoutManager = new LinearLayoutManager(this);
         if (recyclerView != null) {
@@ -88,9 +122,8 @@ public class MainActivity extends AppCompatActivity {
         adapter.setOnLoadMoreListener(new UserListAdapter.OnLoadMoreListener() {
             @Override
             public void onLoadMore() {
-                //TODO: add circle progress bar
-                //userList.add(loadMoreProgressBar);
-                //adapter.notifyItemInserted(userList.size() - 1);
+                userList.add(null);
+                adapter.notifyItemInserted(userList.size() - 1);
                 page++;
                 callUserSearch(lastQuery, page);
             }
@@ -105,7 +138,9 @@ public class MainActivity extends AppCompatActivity {
                         .into(imageView);
             }
         });
+    }
 
+    private void initEditTextSearch() {
         editTextSearch = (EditText)findViewById(R.id.search_edit_text);
 
         editTextSearch.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -118,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        editTextSearch.addTextChangedListener(new TextWatcher() {
+        textWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -127,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 page = 1;
-                if (s.length() > 0)
+                if (s.length() > -1)
                 {
                     if (!s.toString().equals(lastQuery)) {
                         progressBar.setVisibility(View.VISIBLE);
@@ -141,41 +176,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {
             }
-        });
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(GithubSearchService.API_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        github = retrofit.create(GithubSearchService.Github.class);
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        outState.putString("lastQuery", lastQuery);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        dataSaveFragment.setUserList(userList);
+        };
     }
 
     private void callUserSearch(String string) {
         callUserSearch(string, 1);
     }
 
-    private void callUserSearch(String string, final int page) {
+    private void callUserSearch(final String string, final int page) {
         Call<GithubSearchService.SearchResult> call = github.getSearchResult(string, page, 100);
         call.enqueue(new Callback<GithubSearchService.SearchResult>() {
             @Override
             public void onResponse(Call<GithubSearchService.SearchResult> call, Response<GithubSearchService.SearchResult> response) {
                 if (response.isSuccessful()) {
                     if (page > 1) {
+                        userList.remove(userList.size() - 1);
+                        adapter.notifyItemRemoved(userList.size());
                         userList.addAll(response.body().getUserList());
-                        adapter.setUserList(userList);
                         adapter.setLoaded();
                         Log.i(TAG, "onResponse().isSuccessful() add() page: " + page);
                     } else {
@@ -185,6 +202,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } else {
                     adapter.setUserList(null);
+                    if (!string.equals("")) {
+                        Toast.makeText(MainActivity.this, "Not results", Toast.LENGTH_SHORT).show();
+                    }
                     String str = null;
                     try {
                         str = response.errorBody().string();

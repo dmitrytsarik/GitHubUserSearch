@@ -38,7 +38,7 @@
                     android:imeOptions="actionSearch|flagNoExtractUi"
                     android:inputType="textNoSuggestions"
                     android:singleLine="true"
-                    android:hint="Search"
+                    android:hint="@string/search_hint"
                     android:textSize="@dimen/search_text_medium" />
 
             </LinearLayout>

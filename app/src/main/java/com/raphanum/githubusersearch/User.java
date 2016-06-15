@@ -1,6 +1,10 @@
 package com.raphanum.githubusersearch;
 
-public class User {
+import android.support.annotation.Nullable;
+
+import java.lang.annotation.Annotation;
+
+public class User implements Nullable {
     private String login;
     private String avatar_url;
 
@@ -14,6 +18,11 @@ public class User {
 
     public String getAvatarUrl() {
         return avatar_url;
+    }
+
+    @Override
+    public Class<? extends Annotation> annotationType() {
+        return null;
     }
 
     @Override

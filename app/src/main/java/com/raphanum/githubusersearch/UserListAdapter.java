@@ -5,6 +5,7 @@ import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -65,7 +66,7 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     .inflate(R.layout.card_github_user, parent, false);
             vh = new CardViewHolder(cv);
         } else {
-            ContentLoadingProgressBar progressBarItem = (ContentLoadingProgressBar) LayoutInflater.from(parent.getContext())
+            View progressBarItem = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.progress_bar_item, parent, false);
             vh = new ProgressViewHolder(progressBarItem);
         }
@@ -109,9 +110,9 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         private ContentLoadingProgressBar progressBar;
 
-        public ProgressViewHolder(ContentLoadingProgressBar progressBar) {
-            super(progressBar);
-            this.progressBar = progressBar;
+        public ProgressViewHolder(View progressItem) {
+            super(progressItem);
+            this.progressBar = (ContentLoadingProgressBar) progressItem.findViewById(R.id.load_more_progress);
         }
     }
 
