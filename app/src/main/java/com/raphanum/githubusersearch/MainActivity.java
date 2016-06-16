@@ -3,7 +3,6 @@ package com.raphanum.githubusersearch;
 import android.content.Context;
 import android.net.Uri;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -16,6 +15,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText editTextSearch;
     private TextWatcher textWatcher;
-    private ContentLoadingProgressBar progressBar;
+    private ProgressBar progressBar;
     private String lastQuery = "";
     private RetainedFragment dataSaveFragment;
 
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
             fragmentManager.beginTransaction().add(dataSaveFragment, "retainedFragment").commit();
         }
 
-        progressBar = (ContentLoadingProgressBar) findViewById(R.id.loading_progress);
+        progressBar = (ProgressBar) findViewById(R.id.loading_progress);
         initRecyclerView();
         initEditTextSearch();
 
@@ -218,6 +218,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<GithubSearchService.SearchResult> call, Throwable t) {
+                progressBar.setVisibility(View.INVISIBLE);
                 Toast.makeText(MainActivity.this, "onFailure()", Toast.LENGTH_SHORT).show();
                 Log.i(TAG, "onFailure()");
             }

@@ -1,6 +1,5 @@
 package com.raphanum.githubusersearch;
 
-import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -8,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.List;
@@ -108,11 +108,11 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public static class ProgressViewHolder extends RecyclerView.ViewHolder {
 
-        private ContentLoadingProgressBar progressBar;
+        private ProgressBar progressBar;
 
         public ProgressViewHolder(View progressItem) {
             super(progressItem);
-            this.progressBar = (ContentLoadingProgressBar) progressItem.findViewById(R.id.load_more_progress);
+            this.progressBar = (ProgressBar) progressItem.findViewById(R.id.load_more_progress);
         }
     }
 
