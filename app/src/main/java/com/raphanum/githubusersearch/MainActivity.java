@@ -1,7 +1,9 @@
 package com.raphanum.githubusersearch;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
+import android.speech.RecognizerIntent;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,6 +23,7 @@ import android.widget.Toast;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -32,6 +35,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "Test";
+    public static final int SPEECH_RECOGNIZER_CODE = 42;
     private int page = 1;
 
     private UserListAdapter adapter;
@@ -100,6 +104,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         dataSaveFragment.setUserList(userList);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SPEECH_RECOGNIZER_CODE && resultCode == RESULT_OK) {
+            ArrayList list = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            lastQuery = (String)list.get(0);
+            Log.i(TAG, "Result: " + lastQuery);
+            editTextSearch.setText(lastQuery);
+            callUserSearch(lastQuery);
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void initRecyclerView() {
@@ -228,5 +244,12 @@ public class MainActivity extends AppCompatActivity {
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) editTextSearch.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(editTextSearch.getWindowToken(), 0);
+    }
+
+    public void onClick(View view) {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        startActivityForResult(intent, SPEECH_RECOGNIZER_CODE);
     }
 }

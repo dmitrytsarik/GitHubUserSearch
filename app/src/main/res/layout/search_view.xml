@@ -45,6 +45,12 @@
                     android:hint="@string/search_hint"
                     android:textSize="@dimen/search_text_medium" />
 
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="onClick"
+                    android:src="@drawable/ic_mic_black_24dp" />
+
             </LinearLayout>
 
         </LinearLayout>
