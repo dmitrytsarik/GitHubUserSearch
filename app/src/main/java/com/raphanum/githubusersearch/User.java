@@ -2,11 +2,16 @@ package com.raphanum.githubusersearch;
 
 import android.support.annotation.Nullable;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.lang.annotation.Annotation;
 
 public class User implements Nullable {
+
+    @SerializedName("login")
     private String login;
-    private String avatar_url;
+    @SerializedName("avatar_url")
+    private String avatarUrl;
 
     public User(String login) {
         this.login = login;
@@ -17,7 +22,7 @@ public class User implements Nullable {
     }
 
     public String getAvatarUrl() {
-        return avatar_url;
+        return avatarUrl;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.raphanum.githubusersearch;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -20,9 +21,9 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.raphanum.githubusersearch.api.GitHubApiInterface;
 import com.squareup.picasso.Picasso;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,41 +45,35 @@ public class MainActivity extends AppCompatActivity {
     private EditText editTextSearch;
     private TextWatcher textWatcher;
     private ProgressBar progressBar;
-    private String lastQuery = "";
+    private String lastQuery;
     private RetainedFragment dataSaveFragment;
 
     private List<User> userList = null;
 
-    private GithubSearchService.Github github;
+    private GitHubApiInterface gitHubApiInterface;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        dataSaveFragment = (RetainedFragment) fragmentManager.findFragmentByTag("retainedFragment");
-
         if (savedInstanceState != null) {
             lastQuery = savedInstanceState.getString("lastQuery");
-        }
-
-        if (dataSaveFragment != null) {
-            userList = dataSaveFragment.getUserList();
         } else {
-            dataSaveFragment = new RetainedFragment();
-            fragmentManager.beginTransaction().add(dataSaveFragment, "retainedFragment").commit();
+            lastQuery = "";
         }
 
         progressBar = (ProgressBar) findViewById(R.id.loading_progress);
+
+        initRetainedFragment();
         initRecyclerView();
         initEditTextSearch();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(GithubSearchService.API_URL)
+                .baseUrl(Constants.API_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        github = retrofit.create(GithubSearchService.Github.class);
+        gitHubApiInterface = retrofit.create(GitHubApiInterface.class);
     }
 
     @Override
@@ -116,6 +111,18 @@ public class MainActivity extends AppCompatActivity {
             callUserSearch(lastQuery);
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void initRetainedFragment() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        dataSaveFragment = (RetainedFragment) fragmentManager.findFragmentByTag("retainedFragment");
+
+        if (dataSaveFragment != null) {
+            userList = dataSaveFragment.getUserList();
+        } else {
+            dataSaveFragment = new RetainedFragment();
+            fragmentManager.beginTransaction().add(dataSaveFragment, "retainedFragment").commit();
+        }
     }
 
     private void initRecyclerView() {
@@ -200,45 +207,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void callUserSearch(final String string, final int page) {
-        Call<GithubSearchService.SearchResult> call = github.getSearchResult(string, page, 100);
-        call.enqueue(new Callback<GithubSearchService.SearchResult>() {
+        Call<UsersSearchResult> call = gitHubApiInterface.getSearchResult(string, page, Constants.PER_PAGE);
+        call.enqueue(new Callback<UsersSearchResult>() {
             @Override
-            public void onResponse(Call<GithubSearchService.SearchResult> call, Response<GithubSearchService.SearchResult> response) {
+            public void onResponse(Call<UsersSearchResult> call, Response<UsersSearchResult> response) {
                 if (response.isSuccessful()) {
-                    if (page > 1) {
-                        userList.remove(userList.size() - 1);
-                        adapter.notifyItemRemoved(userList.size());
-                        userList.addAll(response.body().getUserList());
-                        adapter.setLoaded();
-                        Log.i(TAG, "onResponse().isSuccessful() add() page: " + page);
-                    } else {
-                        adapter.setUserList(userList = response.body().getUserList());
-                        layoutManager.scrollToPosition(0);
-                        Log.i(TAG, "onResponse().isSuccessful() set()");
-                    }
+                    processSuccessfulResponse(response);
                 } else {
                     adapter.setUserList(null);
                     if (!string.equals("")) {
-                        Toast.makeText(MainActivity.this, "Not results", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "No results", Toast.LENGTH_SHORT).show();
                     }
-                    String str = null;
-                    try {
-                        str = response.errorBody().string();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    Log.i(TAG, "onResponse(): " + str);
                 }
                 progressBar.setVisibility(View.INVISIBLE);
             }
 
             @Override
-            public void onFailure(Call<GithubSearchService.SearchResult> call, Throwable t) {
+            public void onFailure(Call<UsersSearchResult> call, Throwable t) {
                 progressBar.setVisibility(View.INVISIBLE);
                 Toast.makeText(MainActivity.this, "onFailure()", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "onFailure()");
+                Log.i(TAG, "onFailure(): " + t.getMessage());
             }
         });
+    }
+
+    private void processSuccessfulResponse(Response<UsersSearchResult> response) {
+        if (page > 1) {
+            userList.remove(userList.size() - 1);
+            adapter.notifyItemRemoved(userList.size());
+            userList.addAll(response.body().getUserList());
+            adapter.setLoaded();
+        } else {
+            adapter.setUserList(userList = response.body().getUserList());
+            layoutManager.scrollToPosition(0);
+        }
     }
 
     private void hideKeyboard() {
@@ -250,6 +252,10 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        startActivityForResult(intent, SPEECH_RECOGNIZER_CODE);
+        try {
+            startActivityForResult(intent, SPEECH_RECOGNIZER_CODE);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Not supported", Toast.LENGTH_SHORT).show();
+        }
     }
 }

@@ -14,11 +14,9 @@ import java.util.List;
 
 public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private int visibleThreshold;
-    private int lastVisibleItem, totalItemCount;
     private List<User> userList;
-    private static final int ITEM_VIEW = 0;
-    private static final int PROGRESS_VIEW = 1;
+    private static final int VIEW_ITEM = 0;
+    private static final int PROGRESS_ITEM = 1;
     private boolean loading = false;
     private OnLoadMoreListener onLoadMoreListener;
     private OnLoadImageListener onLoadImageListener;
@@ -34,9 +32,9 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                     super.onScrolled(recyclerView, dx, dy);
 
-                    visibleThreshold = linearLayoutManager.getChildCount();
-                    totalItemCount = linearLayoutManager.getItemCount();
-                    lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
+                    int visibleThreshold = linearLayoutManager.getChildCount();
+                    int totalItemCount = linearLayoutManager.getItemCount();
+                    int lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
                     if (!loading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
                         if (onLoadMoreListener != null) {
                             onLoadMoreListener.onLoadMore();
@@ -55,13 +53,13 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public int getItemViewType(int position) {
-        return userList.get(position) != null ? ITEM_VIEW : PROGRESS_VIEW;
+        return userList.get(position) != null ? VIEW_ITEM : PROGRESS_ITEM;
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         RecyclerView.ViewHolder vh;
-        if (viewType == ITEM_VIEW) {
+        if (viewType == VIEW_ITEM) {
             CardView cv = (CardView) LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.card_github_user, parent, false);
             vh = new CardViewHolder(cv);

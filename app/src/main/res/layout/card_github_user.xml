@@ -8,7 +8,10 @@
     android:layout_marginTop="@dimen/cardview_vertical_margin"
     android:layout_marginBottom="@dimen/cardview_vertical_margin"
     app:cardCornerRadius="@dimen/cardview_corner_radius"
-    app:cardElevation="@dimen/cardview_resting_elevation" >
+    app:cardElevation="@dimen/cardview_resting_elevation"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground" >
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,14 +24,15 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:src="@drawable/github_icon"
-            android:scaleType="fitCenter"
+            android:scaleType="centerCrop"
             android:contentDescription="@string/user_image_description" />
 
         <TextView
             android:text="@string/user_login"
             android:id="@+id/login_label"
             android:layout_gravity="center_vertical"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="40dp"
             android:textColor="@android:color/primary_text_light_nodisable"
             android:textSize="14sp"
